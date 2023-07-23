@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  traefik:
+    # The official v2 Traefik docker image
+    image: traefik:v2.10
+    # Enables the web UI and tells Traefik to listen to docker, setups of metrics connection
+    command: --api.insecure=true 
+      --providers.docker
+      --metrics.influxDB2.address=http://influxdb:8086
+      --metrics.influxDB2.token=password
+      --metrics.influxDB2.org=org
+      --metrics.influxDB2.bucket=bucket
+      --metrics.influxDB2.addEntryPointsLabels=true
+      --metrics.influxDB2.addRoutersLabels=true
+      --metrics.influxDB2.addServicesLabels=true
+    networks:
+      - traefik
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    depends_on:
+      - influxdb
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+
+  grafana:
+    image: grafana/grafana:9.5.6
+    networks:
+      - traefik
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SERVER_ROOT_URL=https://grafana.localhost
+  #    - GF_SECURITY_ADMIN_PASSWORD=s8wE9iKaS8jPZvd899xYRg
+    labels:
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.service=grafana"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    volumes:
+      - ./grafana:/var/lib/grafana
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/TZ:/etc/timezone:ro
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    networks:
+      - traefik
+    volumes:
+      - ./influxdb:/var/lib/influxdb2
+      # - ./influxdb/config:/etc/influxdb2
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/TZ:/etc/timezone:ro
+    environment:
+      - INFLUXDB_DB=influxdb
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_HTTP_FLUX_ENABLED=true
+      - DOCKER_INFLUXDB_INIT_USERNAME=influxdb
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password
+      - DOCKER_INFLUXDB_INIT_ORG=org
+      - DOCKER_INFLUXDB_INIT_BUCKET=bucket
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=password
+
+networks:
+  traefik:
+    name: traefik
