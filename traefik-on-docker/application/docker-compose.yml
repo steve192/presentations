@@ -1,5 +1,11 @@
 version: '3'
 
+networks:
+  traefik:
+    external: true
+    name: traefik
+
+
 services:
   sampleapp:
     # A container that exposes an API to show its IP address
@@ -9,6 +15,9 @@ services:
     labels:
       - "traefik.http.routers.sampleapp.rule=Host(`app.localhost`)"
 #      - "traefik.http.services.sampleapp.loadbalancer.server.port=80"
+
+
+
   securedapp:
     image:  dockersamples/static-site
     networks:
@@ -17,33 +26,36 @@ services:
       - "traefik.http.routers.securedapp.rule=Host(`secure.localhost`)"
       - "traefik.http.routers.securedapp.middlewares=secured"
       - "traefik.http.middlewares.secured.basicauth.users=user:$$apr1$$ghqa89i2$$LIEhVdZYBe.7UvXkjydIR0" # user:password
-#      - "traefik.http.routers.securedapp.middlewares=secured,secureHeaders"
-#      - "treafik.http.middlewares.secureHeaders.forceSTSHeader=true"
-#      - "treafik.http.middlewares.secureHeaders.stsIncludeSubdomains=true"
-#      - "treafik.http.middlewares.secureHeaders.frameDeny=true"
-#      - "traefik.http.middlewares.secureHeaders.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-#      - "traefik.http.middlewares.secureHeaders.headers.accesscontrolallowheaders=*"
-#      - "traefik.http.middlewares.secureHeaders.headers.accesscontrolalloworiginlist=http://secure.localhost"
-#      - "traefik.http.middlewares.secureHeaders.headers.accesscontrolmaxage=100"
-#      - "traefik.http.middlewares.secureHeaders.headers.addvaryheader=true"
+      # - "traefik.http.routers.securedapp.middlewares=secured,secureHeaders"
+      # - "treafik.http.middlewares.secureHeaders.forceSTSHeader=true"
+      # - "treafik.http.middlewares.secureHeaders.stsIncludeSubdomains=true"
+      # - "treafik.http.middlewares.secureHeaders.frameDeny=true"
+      # - "traefik.http.middlewares.secureHeaders.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+      # - "traefik.http.middlewares.secureHeaders.headers.accesscontrolallowheaders=*"
+      # - "traefik.http.middlewares.secureHeaders.headers.accesscontrolalloworiginlist=http://secure.localhost"
+      # - "traefik.http.middlewares.secureHeaders.headers.accesscontrolmaxage=100"
+      # - "traefik.http.middlewares.secureHeaders.headers.addvaryheader=true"
+
+
+
+
   ratelimitedapp:
-    image: dockersamples/static-site
+    image:  dockersamples/static-site
     networks:
       - traefik
     labels:
       - "traefik.http.routers.ratelimitedapp.rule=Host(`ratelimit.localhost`)"
-      - "treafik.http.routers.ratelimitedapp.middlewares=ratelimit1"
-#      - "traefik.http.routers.ratelimitedapp.priority=1"
-#      - "traefik.http.routers.ratelimitedapp-api.rule=Host(`ratelimit.localhost`) && Path(`/api`)"
-      # Makes everything match first router and Path /api match second router with rate limit
-#      - "traefik.http.routers.ratelimitedapp-api.priority=2"
-#      - "traefik.http.routers.ratelimitedapp-api.middlewares=ratelimit1"
+      - "traefik.http.routers.ratelimitedapp.middlewares=ratelimit1"
+      # - "traefik.http.routers.ratelimitedapp.priority=1"
+      # - "traefik.http.routers.ratelimitedapp-api.rule=Host(`ratelimit.localhost`) && Path(`/api`)"
+      # # Makes everything match first router and Path /api match second router with rate limit
+      # - "traefik.http.routers.ratelimitedapp-api.priority=2"
+      # - "traefik.http.routers.ratelimitedapp-api.middlewares=ratelimit1"
       - "traefik.http.middlewares.ratelimit1.ratelimit.average=1"
       - "traefik.http.middlewares.ratelimit1.ratelimit.burst=1"
       - "traefik.http.middlewares.ratelimit1.ratelimit.sourcecriterion.requesthost=true"
-networks:
-  traefik:
-    external: true
-    name: traefik
+
+
+      
 
 

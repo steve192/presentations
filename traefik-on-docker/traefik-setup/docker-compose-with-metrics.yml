@@ -38,6 +38,8 @@ services:
     environment:
       - GF_SERVER_ROOT_URL=https://grafana.localhost
   #    - GF_SECURITY_ADMIN_PASSWORD=s8wE9iKaS8jPZvd899xYRg
+    ports:
+      - 3000:3000
     labels:
       - "traefik.docker.network=traefik"
       - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
